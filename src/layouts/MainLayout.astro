@@ -14,6 +14,15 @@ const ads = [
     { image: "/images/mazead.webp", link: "https://www.proprofs.com/quiz-school/story.php?title=are-you-smarter-than-2nd-grader" },
     { image: "/images/foxad.webp", link: "https://www.youtube.com/playlist?list=PLHovnlOusNLgvAbnxluXCVB3KLj8e4QB-" },
     { image: "/images/townsvillead.webp", link: "https://youtube.com/@Townsville-News" },
+    { image: "/images/bskyad.webp", link: "https://bsky.app", link2: "https://x.com", delay: 10_000 },
+    { image: "/images/rbgad.webp", link: "https://rooberbandgames.com" },
+    { image: "/images/gabad.webp", link: "https://www.gov.il/en" }
+];
+
+const bannerAds = [
+    { image: "/images/lstwoMODS AD 2.png", link: "https://lstwomods.com", no_icons: true },
+    { image: "/images/rinnyad.webp", link: "https://rinny.net", no_icons: true },
+    { image: "/images/jackad.webp", link: "https://youtube.com/@the3richwobblies", no_icons: true },
 ];
 ---
 
@@ -44,9 +53,7 @@ const ads = [
         <a href="/">Home</a>
     </header>
 
-    <a href="https://lstwomods.com">
-        <img src="/images/lstwoMODS AD 2.png" alt="" style="width: 100%; margin-top: 16px">
-    </a>
+    <div id="ad-slot-banner" style="width: 100%; margin-top: 16px;"></div>
 
     <slot />
 </main>
@@ -59,14 +66,19 @@ const ads = [
     {ads.map(ad => <Ad {...ad} />)}
 </template>
 
+<template id="banner-ad-pool" hidden>
+    {bannerAds.map(ad => <Ad {...ad} />)}
+</template>
+
 <script>
-    import { refreshAd } from "../scripts/ad";
+    import { refreshAd, initAdRedirects } from "../scripts/ad";
+
+    initAdRedirects();
     
     let adSlotLeft = document.querySelector<HTMLElement>("#ad-slot-left");
     let adSlotRight = document.querySelector<HTMLElement>("#ad-slot-right");
 
     if (adSlotLeft) {
-        console.log("ikdjfgtudsgfkulsdouilfksdikujfgvujzsdkguizfsduikzfhsduizkvcguzxchbgvjhsegduzcvhsdiuzjkvgjkhxdgvjhksgdjkuvgsdjkhvgjhkxscgvjzuwesdguz")
         refreshAd(adSlotLeft);
         setInterval(() => refreshAd(adSlotLeft), 5_091);
     }
@@ -74,6 +86,13 @@ const ads = [
     if (adSlotRight) {
         refreshAd(adSlotRight);
         setInterval(() => refreshAd(adSlotRight), 6_205);
+    }
+
+    let adSlotBanner = document.querySelector<HTMLElement>("#ad-slot-banner");
+
+    if (adSlotBanner) {
+        refreshAd(adSlotBanner, "banner-ad-pool");
+        setInterval(() => refreshAd(adSlotBanner, "banner-ad-pool"), 7_333);
     }
 </script>
 

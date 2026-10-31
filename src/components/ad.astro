@@ -1,16 +1,19 @@
 ---
-const { image, link } = Astro.props;
+const { image, link, link2, delay, no_icons } = Astro.props;
+const useRedirect = Boolean(link2 && delay != null);
 ---
 
 <div class="ad">
-    <a href={link}>
+    <a href={link} target="_blank" class={useRedirect ? "redirect-link" : "ad-link"} data-link2={link2} data-delay={delay}>
         <img src={image} alt="ad">
     </a>
 
-    <div class="ad-icons">
-        <img src="/images/adchoices.svg" alt="">
-        <img src="/images/threedotsidk.svg" alt="">
-    </div>
+    {!no_icons && (
+        <div class="ad-icons">
+            <img src="/images/adchoices.svg" alt="">
+            <img src="/images/threedotsidk.svg" alt="">
+        </div>
+    )}
 </div>
 
 <style>
