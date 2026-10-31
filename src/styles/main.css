@@ -75,3 +75,29 @@ main {
     width: 100%;
     height: auto;
 }
+
+/* Mobile / narrow screens: single column, both ads stacked above the content */
+@media (max-width: 900px) {
+    .page-layout {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "left"
+            "right"
+            "main";
+        gap: 1rem;
+    }
+
+    main {
+        grid-area: main;
+        padding: 1.5rem;
+    }
+
+    .left-sidebar  { grid-area: left; }
+    .right-sidebar { grid-area: right; }
+
+    .left-sidebar,
+    .right-sidebar {
+        width: 100%;
+        justify-self: center;
+    }
+}
