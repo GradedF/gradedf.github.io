@@ -46,7 +46,10 @@ const bannerAds = [
 
 <div class="page-layout">
 
-<div class="left-sidebar" id="ad-slot-left"></div>
+<div class="left-sidebar" id="ad-slot-left">
+    <div class="sidebar-ad-slot"></div>
+    <div class="sidebar-ad-slot"></div>
+</div>
 
 <main>
     <header style="display: flex; justify-content: center">
@@ -59,7 +62,8 @@ const bannerAds = [
 </main>
 
 <div class="right-sidebar" id="ad-slot-right">
-
+    <div class="sidebar-ad-slot"></div>
+    <div class="sidebar-ad-slot"></div>
 </div>
 
 <template id="ad-pool" hidden>
@@ -75,18 +79,12 @@ const bannerAds = [
 
     initAdRedirects();
     
-    let adSlotLeft = document.querySelector<HTMLElement>("#ad-slot-left");
-    let adSlotRight = document.querySelector<HTMLElement>("#ad-slot-right");
+    const sidebarIntervals = [5_091, 6_205, 5_683, 6_917];
 
-    if (adSlotLeft) {
-        refreshAd(adSlotLeft);
-        setInterval(() => refreshAd(adSlotLeft), 5_091);
-    }
-
-    if (adSlotRight) {
-        refreshAd(adSlotRight);
-        setInterval(() => refreshAd(adSlotRight), 6_205);
-    }
+    document.querySelectorAll<HTMLElement>(".sidebar-ad-slot").forEach((slot, i) => {
+        refreshAd(slot);
+        setInterval(() => refreshAd(slot), sidebarIntervals[i % sidebarIntervals.length]);
+    });
 
     let adSlotBanner = document.querySelector<HTMLElement>("#ad-slot-banner");
 
