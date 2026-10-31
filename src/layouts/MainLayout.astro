@@ -1,0 +1,99 @@
+---
+import "../styles/main.css";
+import Ad from "../components/ad.astro";
+import CookieConsent from "../components/CookieConsent.astro";
+
+const { title = "Graded F" } = Astro.props;
+
+const ads = [
+    { image: "/images/gabent ad.webp", link: "https://gabtinte.com" },
+    { image: "/images/djpts1ad.webp", link: "https://djpt.rinny.net/" },
+    { image: "/images/tristanad.webp", link: "https://www.tkplumbing.ca/plumbing-repair-and-maintenance" },
+    { image: "/images/lstwomodsad.webp", link: "https://lstwomods.com" },
+    { image: "/images/djpts2ad.webp", link: "https://djpt.rinny.net/" },
+    { image: "/images/mazead.webp", link: "https://www.proprofs.com/quiz-school/story.php?title=are-you-smarter-than-2nd-grader" },
+    { image: "/images/foxad.webp", link: "https://www.youtube.com/playlist?list=PLHovnlOusNLgvAbnxluXCVB3KLj8e4QB-" },
+    { image: "/images/townsvillead.webp", link: "https://youtube.com/@Townsville-News" },
+];
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>{title}</title>
+</head>
+
+<body>
+
+<CookieConsent />
+
+<marquee class="watermark" behavior="alternate" direction="right">
+    <marquee behavior="alternate" direction="down">
+        Graded F
+    </marquee>
+</marquee>
+
+<div class="page-layout">
+
+<div class="left-sidebar" id="ad-slot-left"></div>
+
+<main>
+    <header style="display: flex; justify-content: center">
+        <a href="/">Home</a>
+    </header>
+
+    <a href="https://lstwomods.com">
+        <img src="/images/lstwoMODS AD 2.png" alt="" style="width: 100%; margin-top: 16px">
+    </a>
+
+    <slot />
+</main>
+
+<div class="right-sidebar" id="ad-slot-right">
+
+</div>
+
+<template id="ad-pool" hidden>
+    {ads.map(ad => <Ad {...ad} />)}
+</template>
+
+<script>
+    import { refreshAd } from "../scripts/ad";
+    
+    let adSlotLeft = document.querySelector<HTMLElement>("#ad-slot-left");
+    let adSlotRight = document.querySelector<HTMLElement>("#ad-slot-right");
+
+    if (adSlotLeft) {
+        console.log("ikdjfgtudsgfkulsdouilfksdikujfgvujzsdkguizfsduikzfhsduizkvcguzxchbgvjhsegduzcvhsdiuzjkvgjkhxdgvjhksgdjkuvgsdjkhvgjhkxscgvjzuwesdguz")
+        refreshAd(adSlotLeft);
+        setInterval(() => refreshAd(adSlotLeft), 5_091);
+    }
+
+    if (adSlotRight) {
+        refreshAd(adSlotRight);
+        setInterval(() => refreshAd(adSlotRight), 6_205);
+    }
+</script>
+
+<style>
+    .watermark {
+        position: absolute;
+        z-index: -1;
+        color: rgba(255, 255, 255, 0.5);
+        width: 100vw;
+        height: 100vh;
+        top: 0;
+        left: 0;
+    }
+
+    .watermark marquee {
+        height: 100vh;
+        width: fit-content;
+    }
+</style>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,77 @@
+
+@font-face { font-family: xp-tahoma-13; font-weight: 400; src: url(/fonts/xp/xp-tahoma-13-regular.woff2); }
+@font-face { font-family: xp-tahoma-13; font-weight: 700; src: url(/fonts/xp/xp-tahoma-13-bold.woff2); }
+@font-face { font-family: xp-tahoma-16; font-weight: 400; src: url(/fonts/xp/xp-tahoma-16-regular.woff2); }
+@font-face { font-family: xp-tahoma-16; font-weight: 700; src: url(/fonts/xp/xp-tahoma-16-bold.woff2); }
+@font-face { font-family: xp-tahoma-19; font-weight: 400; src: url(/fonts/xp/xp-tahoma-19-regular.woff2); }
+@font-face { font-family: xp-tahoma-19; font-weight: 700; src: url(/fonts/xp/xp-tahoma-19-bold.woff2); }
+@font-face { font-family: xp-tahoma-24; font-weight: 400; src: url(/fonts/xp/xp-tahoma-24-regular.woff2); }
+@font-face { font-family: xp-tahoma-24; font-weight: 700; src: url(/fonts/xp/xp-tahoma-24-bold.woff2); }
+@font-face { font-family: xp-tahoma-32; font-weight: 400; src: url(/fonts/xp/xp-tahoma-32-regular.woff2); }
+@font-face { font-family: xp-tahoma-32; font-weight: 700; src: url(/fonts/xp/xp-tahoma-32-bold.woff2); }
+
+* { font-synthesis: none; }
+
+body       { font: 16px xp-tahoma-16; }
+h1         { font: bold 32px xp-tahoma-32; }
+h2         { font: bold 24px xp-tahoma-24; }
+h3         { font: bold 19px xp-tahoma-19; }
+h4         { font: bold 16px xp-tahoma-16; }
+h5, h6     { font: bold 13px xp-tahoma-13; }
+small,
+.text-small { font: 13px xp-tahoma-13; }
+.text-big   { font: 32px xp-tahoma-32; }
+
+body {
+    color: white;
+
+    background-image: url("/images/bg.webp");
+    background-size: 100%;
+
+    animation: scroll-background 30s linear infinite;
+}
+
+a {
+    color: lightblue;
+}
+
+@keyframes scroll-background {
+    from {
+        background-position: 0 0;
+    }
+    to {
+        background-position: 0 -100vh;
+    }
+}
+
+
+
+.page-layout {
+    display: grid;
+    grid-template-columns: 1fr minmax(0, 33%) 1fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+main {
+    width: 100%;
+    box-sizing: border-box;
+    background-color: rgba(0, 0, 0, 0.75);
+    padding: 3rem;
+}
+
+.left-sidebar,
+.right-sidebar {
+    display: flex;
+    flex-direction: column;
+    justify-self: center;
+    min-width: 0;
+    max-width: 640px;
+    width: 20vw;
+    gap: 24px;
+}
+
+.right-sidebar img {
+    width: 100%;
+    height: auto;
+}

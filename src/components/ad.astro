@@ -1,0 +1,41 @@
+---
+const { image, link } = Astro.props;
+---
+
+<div class="ad">
+    <a href={link}>
+        <img src={image} alt="ad">
+    </a>
+
+    <div class="ad-icons">
+        <img src="/images/adchoices.svg" alt="">
+        <img src="/images/threedotsidk.svg" alt="">
+    </div>
+</div>
+
+<style>
+    .ad {
+        position: relative;
+        width: 100%;
+    }
+
+    .ad > a > img {
+        display: block;
+        width: 100%;
+        height: auto;
+    }
+
+    .ad-icons {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        display: flex;
+        gap: 6px;
+        z-index: 1;
+    }
+
+    .ad-icons img {
+        width: 24px;
+        height: 24px;
+    }
+</style>

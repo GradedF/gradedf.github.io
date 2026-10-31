@@ -1,0 +1,43 @@
+---
+import { render, getCollection } from "astro:content";
+import MainLayout from "../../layouts/MainLayout.astro";
+
+export async function getStaticPaths() {
+    const reviews = await getCollection("reviews");
+    return reviews.map(review => ({ params: { slug: review.id }, props: { review } }));
+}
+
+const { review } = Astro.props;
+const { Content } = await render(review);
+---
+
+<MainLayout title={`${review.data.game_title} review | Graded F`}>
+    <h1 style="margin-bottom: -12px">{review.data.game_title}</h1>
+    <p class="text-small">Published on: {review.data.date.toDateString()} {review.data.written_by ? ` - by ${review.data.written_by}` : ``}</p>
+
+    <article style="padding-left: 8px; padding-bottom: 1px" class="white-border" id="review">
+        <span class="text-big">"</span>
+        <div style="margin-top: -28px;">
+            <Content />
+        </div>
+    </article>
+</MainLayout>
+
+<style>
+    .blue-border {
+        border-left: 4px solid blue; 
+    }
+    .white-border {
+        border-left: 4px solid white; 
+    }
+</style>
+
+<script>
+    let review = document.querySelector("#review");
+    const STORAGE_KEY = "cookie-consent";
+    let cookie_consent = localStorage.getItem(STORAGE_KEY);
+
+    if (cookie_consent == "green" && review) {
+        review.className = "blue-border";
+    }
+</script>

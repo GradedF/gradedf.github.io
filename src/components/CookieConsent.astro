@@ -1,0 +1,60 @@
+---
+---
+
+<dialog class="cookie-consent">
+    <form method="dialog">
+        <span style="font-size: x-large;">Our Website uses Cookies</span> <br> <br>
+        nvm we lied but i'm gonna add a fuckass cookie consent anyways <br> <br>
+
+        <div style="display: flex; flex-direction: row; gap: 8px;">
+            <!-- buttons inside <form method="dialog"> close the dialog; `value` becomes dialog.returnValue -->
+            <button value="all">Accept all</button>
+            <button value="green" style="background-color: blue; color: white">Same button but green</button>
+        </div>
+    </form>
+</dialog>
+
+<script>
+    type ConsentChoice = "all" | "green";
+
+    const STORAGE_KEY = "cookie-consent";
+    const CHOICES: readonly ConsentChoice[] = ["all", "green"];
+
+    function isConsentChoice(value: string | null): value is ConsentChoice {
+        return CHOICES.includes(value as ConsentChoice);
+    }
+
+    const dialog = document.querySelector<HTMLDialogElement>(".cookie-consent");
+
+    if (dialog) {
+        if (!isConsentChoice(localStorage.getItem(STORAGE_KEY))) {
+            dialog.showModal();
+        }
+
+        dialog.addEventListener("cancel", (event: Event) => event.preventDefault());
+
+        dialog.addEventListener("close", () => {
+            if (isConsentChoice(dialog.returnValue)) {
+                localStorage.setItem(STORAGE_KEY, dialog.returnValue);
+            }
+        });
+    }
+</script>
+
+<style>
+    .cookie-consent {
+        background-color: white;
+        border: 4px outset;
+        color: black;
+        padding: 24px;
+        outline: 4px solid black;
+    }
+
+    .cookie-consent::backdrop {
+        background-color: rgba(0, 0, 0, 0.75);
+    }
+
+    .cookie-consent button {
+        font: inherit;
+    }
+</style>
