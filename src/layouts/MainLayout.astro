@@ -57,15 +57,22 @@ const bannerAds = [
     <div class="sidebar-ad-slot"></div>
 </div>
 
-<main>
-    <header style="display: flex; justify-content: center">
+<div style="display: flex; flex-direction: column;">
+    <header class="main-page-block">
         <a href="/">Home</a>
     </header>
 
-    <div id="ad-slot-banner" style="width: 100%; margin-top: 16px;"></div>
+    <main class="main-page-block">
+        <div id="ad-slot-banner" style="width: 100%; margin-top: 16px;"></div>
 
-    <slot />
-</main>
+        <slot />
+    </main>
+
+    <footer class="main-page-block">
+        <a href="https://steamcommunity.com/groups/gradedf">Steam Group</a>
+        <a href="https://youtube.com/@GradedF">YouTube Channel</a>
+    </footer>
+</div>
 
 <div class="right-sidebar" id="ad-slot-right">
     <div class="sidebar-ad-slot"></div>

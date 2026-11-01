@@ -53,11 +53,23 @@ a {
     align-items: start;
 }
 
-main {
+.main-page-block {
     width: 100%;
     box-sizing: border-box;
     background-color: rgba(0, 0, 0, 0.75);
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+main {
     padding: 3rem;
+}
+
+header, footer {
+    display: flex;
+    justify-content: center;
+    flex-direction: row;
+    gap: 1rem
 }
 
 .left-sidebar,
