@@ -4,10 +4,12 @@ export interface CaptchaImage {
     match?: boolean;
     squares?: number[];
     word?: string;
+    question?: string;
+    answers?: string[];
 }
 
 export interface CaptchaDefinition {
-    type: "select" | "replace" | "squares" | "text";
+    type: "select" | "replace" | "squares" | "text" | "audio";
     target: string;
     images: CaptchaImage[];
     gridSize?: number;
@@ -58,9 +60,11 @@ const { captchas, rounds = 2, label = "I'm not a robot" } = Astro.props;
         match?: boolean;
         squares?: number[];
         word?: string;
+        question?: string;
+        answers?: string[];
     };
 
-    type CaptchaType = "select" | "replace" | "squares" | "text";
+    type CaptchaType = "select" | "replace" | "squares" | "text" | "audio";
 
     type CaptchaDefinition = {
         type: CaptchaType;
@@ -96,6 +100,11 @@ const { captchas, rounds = 2, label = "I'm not a robot" } = Astro.props;
             instructions: "Separate the words with a space.",
             gridSize: 2,
         },
+        audio: {
+            prompt: "Listen and answer",
+            instructions: "Press play to hear it again.",
+            gridSize: 1,
+        },
     };
 
     const FADE_OUT_MS = 300;
@@ -123,7 +132,7 @@ const { captchas, rounds = 2, label = "I'm not a robot" } = Astro.props;
     function createChallenge(definition: CaptchaDefinition): Challenge {
         const gridSize = definition.gridSize ?? CAPTCHA_TYPES[definition.type].gridSize;
 
-        if (definition.type === "squares") {
+        if (definition.type === "squares" || definition.type === "audio") {
             return { ...definition, gridSize, tiles: [], image: randomItem(definition.images) };
         }
 
@@ -242,7 +251,35 @@ const { captchas, rounds = 2, label = "I'm not a robot" } = Astro.props;
             return textInput;
         }
 
+        function createAudioPlayer(image: CaptchaImage) {
+            const audioPlayer = document.createElement("audio");
+
+            audioPlayer.className = "captcha-audio";
+            audioPlayer.src = image.src;
+            audioPlayer.controls = true;
+            audioPlayer.setAttribute("controlsList", "nodownload noplaybackrate");
+
+            let playedUntil = 0;
+
+            audioPlayer.addEventListener("timeupdate", () => {
+                if (!audioPlayer.seeking) playedUntil = Math.max(playedUntil, audioPlayer.currentTime);
+            });
+
+            audioPlayer.addEventListener("seeking", () => {
+                if (audioPlayer.currentTime > playedUntil) audioPlayer.currentTime = playedUntil;
+            });
+
+            return audioPlayer;
+        }
+
+        function getExpectedText() {
+            if (challenge.type === "audio") return challenge.image?.answers?.[0] ?? "";
+
+            return challenge.tiles.map(image => image.word ?? "").join(" ");
+        }
+
         function showNewChallenge() {
+            grid.querySelector("audio")?.pause();
             challenge = createChallenge(randomItem(usableCaptchas));
 
             const { prompt: promptText, instructions: instructionsText } = CAPTCHA_TYPES[challenge.type];
@@ -253,7 +290,7 @@ const { captchas, rounds = 2, label = "I'm not a robot" } = Astro.props;
             error.hidden = true;
 
             prompt.textContent = promptText;
-            target.textContent = challenge.target;
+            target.textContent = challenge.image?.question ?? challenge.target;
             instructions.textContent = instructionsText;
 
             grid.style.setProperty("--fade-in-duration", `${FADE_IN_MS}ms`);
@@ -261,6 +298,15 @@ const { captchas, rounds = 2, label = "I'm not a robot" } = Astro.props;
 
             if (challenge.type === "text") {
                 grid.replaceChildren(...challenge.tiles.map(createWordImage), createTextInput());
+                textInput.focus();
+                return;
+            }
+
+            if (challenge.type === "audio") {
+                const audioPlayer = createAudioPlayer(challenge.image!);
+
+                grid.replaceChildren(audioPlayer, createTextInput());
+                audioPlayer.play().catch(() => {});
                 textInput.focus();
                 return;
             }
@@ -276,8 +322,12 @@ const { captchas, rounds = 2, label = "I'm not a robot" } = Astro.props;
 
         function isCorrect() {
             if (challenge.type === "text") {
-                const expected = challenge.tiles.map(image => image.word ?? "").join(" ");
-                return normalizeText(textInput.value) === normalizeText(expected);
+                return normalizeText(textInput.value) === normalizeText(getExpectedText());
+            }
+
+            if (challenge.type === "audio") {
+                const answers = challenge.image?.answers ?? [];
+                return answers.some(answer => normalizeText(answer) === normalizeText(textInput.value));
             }
 
             if (challenge.type === "replace") {
@@ -311,8 +361,8 @@ const { captchas, rounds = 2, label = "I'm not a robot" } = Astro.props;
 
         verifyButton.addEventListener("click", () => {
             if (!isCorrect()) {
-                if (challenge.type == "text") {
-                    error.textContent = "Wrong. Expected answer: " + challenge.tiles.map(image => image.word ?? "").join(" ");
+                if (challenge.type == "text" || challenge.type == "audio") {
+                    error.textContent = "Wrong. Expected answer: " + getExpectedText();
                 }
                 else {
                     error.textContent = "Please try again."
@@ -515,6 +565,10 @@ const { captchas, rounds = 2, label = "I'm not a robot" } = Astro.props;
         background: #fff;
         border: 1px solid #ccc;
         box-sizing: border-box;
+    }
+
+    .captcha-audio {
+        width: 100%;
     }
 
     .captcha-text-input {

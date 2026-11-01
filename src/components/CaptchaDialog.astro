@@ -44,12 +44,17 @@ const ytbersImages = [
     { src: "/images/captcha/yt9.png", match: false },
 ]
 
+const audioClips = [
+    { src: "/audio/captcha/audiocaptcha1.mp3", question: "How big is cae's forehead?", answers: ["30cm", "30 cm", "thirty cm", "30 centimeters", "thirty centimeters", "idk"] },
+];
+
 const captchas: CaptchaDefinition[] = [
     { type: "select", target: "motorcycles", images: roadImages },
     { type: "replace", target: "motorcycles", images: roadImages },
     { type: "squares", target: "traffic lights", images: trafficLightImages },
     { type: "text", target: "two words", images: wordImages },
     { type: "select", target: "good youtubers", images: ytbersImages },
+    { type: "audio", target: "the question", images: audioClips },
 ];
 ---
 
