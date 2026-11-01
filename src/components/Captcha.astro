@@ -1,20 +1,28 @@
 ---
-interface CaptchaImage {
+export interface CaptchaImage {
     src: string;
-    motorcycle?: boolean;
-    trafficLightSquares?: number[];
+    match?: boolean;
+    squares?: number[];
+    word?: string;
+}
+
+export interface CaptchaDefinition {
+    type: "select" | "replace" | "squares" | "text";
+    target: string;
+    images: CaptchaImage[];
+    gridSize?: number;
 }
 
 interface Props {
-    images: CaptchaImage[];
+    captchas: CaptchaDefinition[];
     rounds?: number;
     label?: string;
 }
 
-const { images, rounds = 2, label = "I'm not a robot" } = Astro.props;
+const { captchas, rounds = 2, label = "I'm not a robot" } = Astro.props;
 ---
 
-<div class="captcha" data-images={JSON.stringify(images)} data-rounds={rounds}>
+<div class="captcha" data-captchas={JSON.stringify(captchas)} data-rounds={rounds}>
     <button class="captcha-anchor" type="button">
         <span class="captcha-checkbox"></span>
         <span class="captcha-label">{label}</span>
@@ -47,16 +55,47 @@ const { images, rounds = 2, label = "I'm not a robot" } = Astro.props;
 <script>
     type CaptchaImage = {
         src: string;
-        motorcycle?: boolean;
-        trafficLightSquares?: number[];
+        match?: boolean;
+        squares?: number[];
+        word?: string;
     };
 
-    type Challenge = {
+    type CaptchaType = "select" | "replace" | "squares" | "text";
+
+    type CaptchaDefinition = {
+        type: CaptchaType;
         target: string;
+        images: CaptchaImage[];
+        gridSize?: number;
+    };
+
+    type Challenge = CaptchaDefinition & {
         gridSize: number;
-        images?: CaptchaImage[];
+        tiles: CaptchaImage[];
         image?: CaptchaImage;
-        replacesTiles?: boolean;
+    };
+
+    const CAPTCHA_TYPES: Record<CaptchaType, { prompt: string; instructions: string; gridSize: number }> = {
+        select: {
+            prompt: "Select all images with",
+            instructions: "If there are none, click verify.",
+            gridSize: 3,
+        },
+        replace: {
+            prompt: "Select all images with",
+            instructions: "Click verify once there are none left.",
+            gridSize: 3,
+        },
+        squares: {
+            prompt: "Select all squares with",
+            instructions: "If there are none, click verify.",
+            gridSize: 4,
+        },
+        text: {
+            prompt: "Type the",
+            instructions: "Separate the words with a space.",
+            gridSize: 2,
+        },
     };
 
     const FADE_OUT_MS = 300;
@@ -77,38 +116,28 @@ const { images, rounds = 2, label = "I'm not a robot" } = Astro.props;
         return items[Math.floor(Math.random() * items.length)];
     }
 
-    function createMotorcycleChallenge(roadImages: CaptchaImage[]): Challenge {
-        return {
-            target: "motorcycles",
-            gridSize: 3,
-            images: shuffle(roadImages).slice(0, 9),
-            replacesTiles: Math.random() < 0.5,
-        };
+    function normalizeText(text: string) {
+        return text.trim().toLowerCase().split(/\s+/).join(" ");
     }
 
-    function createTrafficLightChallenge(trafficLightImages: CaptchaImage[]): Challenge {
-        return {
-            target: "traffic lights",
-            gridSize: 4,
-            image: randomItem(trafficLightImages),
-        };
-    }
+    function createChallenge(definition: CaptchaDefinition): Challenge {
+        const gridSize = definition.gridSize ?? CAPTCHA_TYPES[definition.type].gridSize;
 
-    function createRandomChallenge(roadImages: CaptchaImage[], trafficLightImages: CaptchaImage[]) {
-        if (roadImages.length === 0) return createTrafficLightChallenge(trafficLightImages);
-        if (trafficLightImages.length === 0) return createMotorcycleChallenge(roadImages);
+        if (definition.type === "squares") {
+            return { ...definition, gridSize, tiles: [], image: randomItem(definition.images) };
+        }
 
-        return Math.random() < 0.5
-            ? createMotorcycleChallenge(roadImages)
-            : createTrafficLightChallenge(trafficLightImages);
+        if (definition.type === "text") {
+            return { ...definition, gridSize, tiles: shuffle(definition.images).slice(0, gridSize) };
+        }
+
+        return { ...definition, gridSize, tiles: shuffle(definition.images).slice(0, gridSize ** 2) };
     }
 
     function setupCaptcha(root: HTMLElement) {
-        const images: CaptchaImage[] = JSON.parse(root.dataset.images ?? "[]");
+        const captchas: CaptchaDefinition[] = JSON.parse(root.dataset.captchas ?? "[]");
+        const usableCaptchas = captchas.filter(captcha => captcha.images.length > 0);
         const rounds = Number(root.dataset.rounds ?? 1);
-
-        const roadImages = images.filter(image => image.motorcycle !== undefined);
-        const trafficLightImages = images.filter(image => image.trafficLightSquares !== undefined);
 
         const anchor = root.querySelector<HTMLButtonElement>(".captcha-anchor")!;
         const popup = root.querySelector<HTMLElement>(".captcha-popup")!;
@@ -123,6 +152,7 @@ const { images, rounds = 2, label = "I'm not a robot" } = Astro.props;
         let challenge: Challenge;
         let solvedRounds = 0;
         let madeMistake = false;
+        let textInput: HTMLInputElement;
         const selectedTiles = new Set<number>();
 
         function setTileBackground(tileImage: HTMLElement, index: number) {
@@ -137,19 +167,19 @@ const { images, rounds = 2, label = "I'm not a robot" } = Astro.props;
                 tileImage.style.backgroundSize = `${gridSize * 100}% ${gridSize * 100}%`;
                 tileImage.style.backgroundPosition = `${column * step}% ${row * step}%`;
             } else {
-                tileImage.style.backgroundImage = `url("${challenge.images![index].src}")`;
+                tileImage.style.backgroundImage = `url("${challenge.tiles[index].src}")`;
             }
         }
 
         function pickReplacementImage() {
-            const unused = roadImages.filter(image => !challenge.images!.includes(image));
-            return randomItem(unused.length > 0 ? unused : roadImages);
+            const unused = challenge.images.filter(image => !challenge.tiles.includes(image));
+            return randomItem(unused.length > 0 ? unused : challenge.images);
         }
 
         function replaceTile(tile: HTMLElement, tileImage: HTMLElement, index: number) {
-            if (!challenge.images![index].motorcycle) madeMistake = true;
+            if (!challenge.tiles[index].match) madeMistake = true;
 
-            challenge.images![index] = pickReplacementImage();
+            challenge.tiles[index] = pickReplacementImage();
             tile.classList.add("fading-out");
 
             setTimeout(() => {
@@ -179,7 +209,7 @@ const { images, rounds = 2, label = "I'm not a robot" } = Astro.props;
             tile.addEventListener("click", () => {
                 error.hidden = true;
 
-                if (challenge.replacesTiles) replaceTile(tile, tileImage, index);
+                if (challenge.type === "replace") replaceTile(tile, tileImage, index);
                 else toggleTile(tile, index);
             });
 
@@ -187,35 +217,71 @@ const { images, rounds = 2, label = "I'm not a robot" } = Astro.props;
             return tile;
         }
 
-        function showNewChallenge() {
-            challenge = createRandomChallenge(roadImages, trafficLightImages);
+        function createWordImage(image: CaptchaImage) {
+            const wordImage = document.createElement("img");
 
-            const tileCount = challenge.image ? challenge.gridSize ** 2 : challenge.images!.length;
+            wordImage.className = "captcha-word";
+            wordImage.src = image.src;
+            wordImage.alt = "";
+
+            return wordImage;
+        }
+
+        function createTextInput() {
+            textInput = document.createElement("input");
+
+            textInput.className = "captcha-text-input";
+            textInput.autocomplete = "off";
+            textInput.spellcheck = false;
+
+            textInput.addEventListener("input", () => (error.hidden = true));
+            textInput.addEventListener("keydown", event => {
+                if (event.key === "Enter") verifyButton.click();
+            });
+
+            return textInput;
+        }
+
+        function showNewChallenge() {
+            challenge = createChallenge(randomItem(usableCaptchas));
+
+            const { prompt: promptText, instructions: instructionsText } = CAPTCHA_TYPES[challenge.type];
+            const tileCount = challenge.image ? challenge.gridSize ** 2 : challenge.tiles.length;
 
             madeMistake = false;
             selectedTiles.clear();
             error.hidden = true;
 
-            prompt.textContent = challenge.image ? "Select all squares with" : "Select all images with";
+            prompt.textContent = promptText;
             target.textContent = challenge.target;
-            instructions.textContent = challenge.replacesTiles
-                ? "Click verify once there are none left."
-                : "If there are none, click verify.";
+            instructions.textContent = instructionsText;
 
             grid.style.setProperty("--fade-in-duration", `${FADE_IN_MS}ms`);
             grid.style.gridTemplateColumns = `repeat(${challenge.gridSize}, 1fr)`;
+
+            if (challenge.type === "text") {
+                grid.replaceChildren(...challenge.tiles.map(createWordImage), createTextInput());
+                textInput.focus();
+                return;
+            }
+
             grid.replaceChildren(...Array.from({ length: tileCount }, (_, index) => createTile(index)));
         }
 
         function getAnswer() {
-            if (challenge.image) return challenge.image.trafficLightSquares!;
+            if (challenge.image) return challenge.image.squares ?? [];
 
-            return challenge.images!.flatMap((image, index) => (image.motorcycle ? [index] : []));
+            return challenge.tiles.flatMap((image, index) => (image.match ? [index] : []));
         }
 
         function isCorrect() {
-            if (challenge.replacesTiles) {
-                return !madeMistake && !challenge.images!.some(image => image.motorcycle);
+            if (challenge.type === "text") {
+                const expected = challenge.tiles.map(image => image.word ?? "").join(" ");
+                return normalizeText(textInput.value) === normalizeText(expected);
+            }
+
+            if (challenge.type === "replace") {
+                return !madeMistake && !challenge.tiles.some(image => image.match);
             }
 
             const answer = new Set(getAnswer());
@@ -236,8 +302,8 @@ const { images, rounds = 2, label = "I'm not a robot" } = Astro.props;
 
             setTimeout(() => {
                 solvedRounds = 0;
-                showNewChallenge();
                 popup.hidden = false;
+                showNewChallenge();
             }, 600);
         });
 
@@ -245,6 +311,13 @@ const { images, rounds = 2, label = "I'm not a robot" } = Astro.props;
 
         verifyButton.addEventListener("click", () => {
             if (!isCorrect()) {
+                if (challenge.type == "text") {
+                    error.textContent = "Wrong. Expected answer: " + challenge.tiles.map(image => image.word ?? "").join(" ");
+                }
+                else {
+                    error.textContent = "Please try again."
+                }
+                
                 showNewChallenge();
                 error.hidden = false;
                 return;
@@ -433,6 +506,23 @@ const { images, rounds = 2, label = "I'm not a robot" } = Astro.props;
         border-radius: 50%;
         color: #fff;
         font-size: 14px;
+    }
+
+    .captcha-word {
+        display: block;
+        width: 100%;
+        height: auto;
+        background: #fff;
+        border: 1px solid #ccc;
+        box-sizing: border-box;
+    }
+
+    .captcha-text-input {
+        grid-column: 1 / -1;
+        padding: 8px;
+        border: 1px solid #ccc;
+        font: inherit;
+        font-size: 16px;
     }
 
     .captcha-error {

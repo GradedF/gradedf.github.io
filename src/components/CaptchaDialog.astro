@@ -1,22 +1,55 @@
 ---
 import Captcha from "./Captcha.astro";
+import type { CaptchaDefinition } from "./Captcha.astro";
 
-const images = [
-    { src: "/images/captcha/road1.webp", motorcycle: false },
-    { src: "/images/captcha/road2.webp", motorcycle: true },
-    { src: "/images/captcha/road3.webp", motorcycle: false },
-    { src: "/images/captcha/road4.webp", motorcycle: true },
-    { src: "/images/captcha/road5.webp", motorcycle: false },
-    { src: "/images/captcha/road6.webp", motorcycle: true },
-    { src: "/images/captcha/road7.webp", motorcycle: false },
-    { src: "/images/captcha/road8.webp", motorcycle: false },
-    { src: "/images/captcha/road9.webp", motorcycle: false },
-    { src: "/images/captcha/road10.webp", motorcycle: false },
-    { src: "/images/captcha/road11.webp", motorcycle: true },
-    { src: "/images/captcha/road12.webp", motorcycle: true },
-    { src: "/images/captcha/road13.webp", motorcycle: false },
-    { src: "/images/captcha/trafficlight1.webp", trafficLightSquares: [5,9,13] },
-    { src: "/images/captcha/trafficlight2.webp", trafficLightSquares: [2,6,10,14] },
+const roadImages = [
+    { src: "/images/captcha/road1.webp", match: false },
+    { src: "/images/captcha/road2.webp", match: true },
+    { src: "/images/captcha/road3.webp", match: false },
+    { src: "/images/captcha/road4.webp", match: true },
+    { src: "/images/captcha/road5.webp", match: false },
+    { src: "/images/captcha/road6.webp", match: true },
+    { src: "/images/captcha/road7.webp", match: false },
+    { src: "/images/captcha/road8.webp", match: false },
+    { src: "/images/captcha/road9.webp", match: false },
+    { src: "/images/captcha/road10.webp", match: false },
+    { src: "/images/captcha/road11.webp", match: true },
+    { src: "/images/captcha/road12.webp", match: true },
+    { src: "/images/captcha/road13.webp", match: false },
+];
+
+const trafficLightImages = [
+    { src: "/images/captcha/trafficlight1.webp", squares: [5, 6, 9, 10, 13] },
+    { src: "/images/captcha/trafficlight2.webp", squares: [2, 6, 10, 14] },
+];
+
+const wordImages = [
+    { src: "/images/captcha/word1.webp", word: "mazaniel" },
+    { src: "/images/captcha/word2.webp", word: "labyrinth" },
+    { src: "/images/captcha/word3.webp", word: "three" },
+    { src: "/images/captcha/word4.webp", word: "enterprise" },
+    { src: "/images/captcha/word5.webp", word: "Tristan's Pipe Repairs" },
+    { src: "/images/captcha/word6.webp", word: "Graded F" },
+];
+
+const ytbersImages = [
+    { src: "/images/captcha/yt1.jpg", match: false },
+    { src: "/images/captcha/yt2.jpg", match: false },
+    { src: "/images/captcha/yt3.jpg", match: false },
+    { src: "/images/captcha/yt4.jpg", match: false },
+    { src: "/images/captcha/yt5.jpg", match: true },
+    { src: "/images/captcha/yt6.jpg", match: false },
+    { src: "/images/captcha/yt7.jpg", match: false },
+    { src: "/images/captcha/yt8.jpg", match: false },
+    { src: "/images/captcha/yt9.png", match: false },
+]
+
+const captchas: CaptchaDefinition[] = [
+    { type: "select", target: "motorcycles", images: roadImages },
+    { type: "replace", target: "motorcycles", images: roadImages },
+    { type: "squares", target: "traffic lights", images: trafficLightImages },
+    { type: "text", target: "two words", images: wordImages },
+    { type: "select", target: "good youtubers", images: ytbersImages },
 ];
 ---
 
@@ -24,7 +57,7 @@ const images = [
     <span style="font-size: x-large;">Verify you are human</span> <br> <br>
     to continue to the Graded F website please prove you are not a robot <br> <br>
 
-    <Captcha images={images} />
+    <Captcha captchas={captchas} />
 </dialog>
 
 <script>
@@ -36,7 +69,7 @@ const images = [
     function openCaptcha() {
         const lastCaptcha = Number(localStorage.getItem(STORAGE_KEY));
         
-        if (!dialog || Date.now() - lastCaptcha < 5 * 60 * 1000) return;
+        if (!dialog || Date.now() - lastCaptcha < 1 * 60 * 1000) return;
 
         if (cookieConsent?.open) {
             cookieConsent.addEventListener("close", openCaptcha, { once: true });
