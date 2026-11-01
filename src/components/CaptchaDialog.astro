@@ -1,0 +1,80 @@
+---
+import Captcha from "./Captcha.astro";
+
+const images = [
+    { src: "/images/captcha/road1.webp", motorcycle: false },
+    { src: "/images/captcha/road2.webp", motorcycle: true },
+    { src: "/images/captcha/road3.webp", motorcycle: false },
+    { src: "/images/captcha/road4.webp", motorcycle: true },
+    { src: "/images/captcha/road5.webp", motorcycle: false },
+    { src: "/images/captcha/road6.webp", motorcycle: true },
+    { src: "/images/captcha/road7.webp", motorcycle: false },
+    { src: "/images/captcha/road8.webp", motorcycle: false },
+    { src: "/images/captcha/road9.webp", motorcycle: false },
+    { src: "/images/captcha/road10.webp", motorcycle: false },
+    { src: "/images/captcha/road11.webp", motorcycle: true },
+    { src: "/images/captcha/road12.webp", motorcycle: true },
+    { src: "/images/captcha/road13.webp", motorcycle: false },
+    { src: "/images/captcha/trafficlight1.webp", trafficLightSquares: [5,9,13] },
+    { src: "/images/captcha/trafficlight2.webp", trafficLightSquares: [2,6,10,14] },
+];
+---
+
+<dialog class="captcha-dialog">
+    <span style="font-size: x-large;">Verify you are human</span> <br> <br>
+    to continue to the Graded F website please prove you are not a robot <br> <br>
+
+    <Captcha images={images} />
+</dialog>
+
+<script>
+    const STORAGE_KEY = "captcha-solved";
+
+    const dialog = document.querySelector<HTMLDialogElement>(".captcha-dialog");
+    const cookieConsent = document.querySelector<HTMLDialogElement>(".cookie-consent");
+
+    function openCaptcha() {
+        const lastCaptcha = Number(localStorage.getItem(STORAGE_KEY));
+        
+        if (!dialog || Date.now() - lastCaptcha < 5 * 60 * 1000) return;
+
+        if (cookieConsent?.open) {
+            cookieConsent.addEventListener("close", openCaptcha, { once: true });
+            return;
+        }
+
+        dialog.showModal();
+    }
+
+    if (dialog) {
+        dialog.addEventListener("cancel", (event: Event) => event.preventDefault());
+
+        dialog.addEventListener("captcha-solved", () => {
+            localStorage.setItem(STORAGE_KEY, Date.now().toString());
+            setTimeout(() => dialog.close(), 800);
+        });
+
+        openCaptcha();
+    }
+</script>
+
+<style>
+    .captcha-dialog {
+        background-color: white;
+        border: 4px outset;
+        color: black;
+        padding: 24px;
+        outline: 4px solid black;
+    }
+
+    .captcha-dialog::backdrop {
+        background-color: rgba(0, 0, 0, 0.75);
+    }
+
+    .captcha-dialog :global(.captcha-popup) {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+</style>

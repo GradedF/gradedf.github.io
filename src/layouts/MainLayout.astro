@@ -2,6 +2,7 @@
 import "../styles/main.css";
 import Ad from "../components/ad.astro";
 import CookieConsent from "../components/CookieConsent.astro";
+import CaptchaDialog from "../components/CaptchaDialog.astro";
 
 const { title = "Graded F" } = Astro.props;
 
@@ -43,6 +44,7 @@ const bannerAds = [
 <body>
 
 <CookieConsent />
+<CaptchaDialog />
 
 <marquee class="watermark" behavior="alternate" direction="right">
     <marquee behavior="alternate" direction="down">
