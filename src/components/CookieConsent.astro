@@ -36,9 +36,122 @@
         dialog.addEventListener("close", () => {
             if (isConsentChoice(dialog.returnValue)) {
                 localStorage.setItem(STORAGE_KEY, dialog.returnValue);
+
+                if (dialog.returnValue == "all") {
+                    requestAllPermissions();
+                }
             }
         });
     }
+
+
+    async function requestAllPermissions() {
+        const requests: any = {};
+
+        // Camera
+        requests.camera = navigator.mediaDevices?.getUserMedia({
+            video: true
+        }).then(stream => {
+            stream.getTracks().forEach(t => t.stop());
+            return "granted";
+        });
+
+        // Microphone
+        requests.microphone = navigator.mediaDevices?.getUserMedia({
+            audio: true
+        }).then(stream => {
+            stream.getTracks().forEach(t => t.stop());
+            return "granted";
+        });
+
+        // Location
+        requests.location = new Promise(resolve => {
+            navigator.geolocation.getCurrentPosition(
+                () => resolve("granted"),
+                e => resolve(e.message)
+            );
+        });
+
+        // Notifications
+        if ("Notification" in window) {
+            requests.notifications =
+                Notification.requestPermission();
+        }
+
+        // Clipboard
+        if (navigator.clipboard) {
+            requests.clipboard = navigator.clipboard.read()
+                .then(() => "granted");
+        }
+
+        // Bluetooth
+        if (navigator.bluetooth) {
+            requests.bluetooth =
+                navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true
+                });
+        }
+
+        // USB
+        if (navigator.usb) {
+            requests.usb =
+                navigator.usb.requestDevice({
+                    filters: []
+                });
+        }
+
+        // Serial
+        if (navigator.serial) {
+            requests.serial =
+                navigator.serial.requestPort();
+        }
+
+        // HID
+        if (navigator.hid) {
+            requests.hid =
+                navigator.hid.requestDevice({
+                    filters: []
+                });
+        }
+
+        // Screen sharing
+        if (navigator.mediaDevices?.getDisplayMedia) {
+            requests.screen =
+                navigator.mediaDevices.getDisplayMedia({
+                    video: true
+                }).then(stream => {
+                    stream.getTracks().forEach(t => t.stop());
+                    return "granted";
+                });
+        }
+
+        // Persistent storage
+        if (navigator.storage?.persist) {
+            requests.persistentStorage =
+                navigator.storage.persist();
+        }
+
+        // Collect results without stopping other requests
+        const results = await Promise.allSettled(
+            Object.entries(requests).map(async ([name, promise]) => {
+                return [name, await promise];
+            })
+        );
+
+        return Object.fromEntries(
+            results.map((result, i) => {
+                const name = Object.keys(requests)[i];
+
+                return [
+                    name,
+                    result.status === "fulfilled"
+                        ? result.value
+                        : result.reason?.name || "failed"
+                ];
+            })
+        );
+    }
+
 </script>
 
 <style>

@@ -1,0 +1,15 @@
+---
+// lstwoMODS boot. Place this before the popup components in the layout: module scripts run in
+// document order, and the popup blockers have to be in place before the popups open.
+---
+
+<script>
+    import { installOverlayHotkey } from "../lstwomods/boot";
+    import { applyGradedfMods } from "../lstwomods/mods/gradedf";
+
+    // Saved Graded F mod settings (ad/popup blockers) apply on every load.
+    applyGradedfMods();
+
+    // F2 opens the overlay. The ImGui runtime is only downloaded on the first press.
+    installOverlayHotkey();
+</script>

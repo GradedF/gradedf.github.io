@@ -12,6 +12,7 @@
     "astro": "astro"
   },
   "dependencies": {
+    "@mori2003/jsimgui": "^0.14.0",
     "astro": "^7.4.4"
   }
 }

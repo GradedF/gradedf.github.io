@@ -1,0 +1,315 @@
+---
+export interface VideoAdDefinition {
+    src: string;
+    link?: string;
+    skipAfter?: number;
+}
+
+interface Props {
+    ads: VideoAdDefinition[];
+    intervalSeconds?: number;
+}
+
+const { ads, intervalSeconds = 120 } = Astro.props;
+---
+
+<dialog class="video-ad" closedby="none" data-ads={JSON.stringify(ads)} data-interval={intervalSeconds}>
+    <div class="video-ad-frame">
+        <video class="video-ad-video" playsinline></video>
+        <span class="video-ad-label">Ad</span>
+        <button class="video-ad-close" type="button" disabled>
+            <span class="video-ad-countdown"></span>
+            <img class="video-ad-close-icon" src="/images/x.svg" alt="Close" hidden>
+        </button>
+        <button class="video-ad-sound" type="button">
+            <img class="video-ad-sound-icon" src="/images/volume-x.svg" alt="Toggle sound">
+        </button>
+    </div>
+</dialog>
+
+<script>
+    type VideoAdDefinition = {
+        src: string;
+        link?: string;
+        skipAfter?: number;
+    };
+
+    const STORAGE_KEY = "next-video-ad";
+
+    function randomItem<T>(items: T[]) {
+        return items[Math.floor(Math.random() * items.length)];
+    }
+
+    function setupVideoAd(dialog: HTMLDialogElement) {
+        const ads: VideoAdDefinition[] = JSON.parse(dialog.dataset.ads ?? "[]");
+        const intervalMs = Number(dialog.dataset.interval) * 1000;
+
+        const video = dialog.querySelector<HTMLVideoElement>(".video-ad-video")!;
+        const closeButton = dialog.querySelector<HTMLButtonElement>(".video-ad-close")!;
+        const countdown = dialog.querySelector<HTMLSpanElement>(".video-ad-countdown")!;
+        const closeIcon = dialog.querySelector<HTMLImageElement>(".video-ad-close-icon")!;
+        const soundButton = dialog.querySelector<HTMLButtonElement>(".video-ad-sound")!;
+        const soundIcon = dialog.querySelector<HTMLImageElement>(".video-ad-sound-icon")!;
+
+        let closable = false;
+        let closedThisAdAlready = false;
+
+        closeButton.style.top = "8px";
+        closeButton.style.right = "8px";
+        closeButton.disabled = false;
+
+        let currentAd: VideoAdDefinition;
+        let allowClose = false;
+
+        function getNextAdTime() {
+            return Number(localStorage.getItem(STORAGE_KEY));
+        }
+
+        function scheduleNextAd() {
+            if (!getNextAdTime()) localStorage.setItem(STORAGE_KEY, String(Date.now() + intervalMs));
+
+            setTimeout(showAd, Math.max(0, getNextAdTime() - Date.now()));
+        }
+
+        function setClosable() {
+            closable = true;
+            countdown.textContent = "";
+            closeIcon.hidden = false;
+        }
+
+        function updateCountdown() {
+            if (closable) return;
+
+            const skipAfter = currentAd.skipAfter ?? video.duration;
+            const secondsLeft = Math.ceil(skipAfter - video.currentTime);
+
+            if (secondsLeft <= 0) setClosable();
+            else if (Number.isFinite(secondsLeft)) countdown.textContent = String(secondsLeft);
+        }
+
+        function updateSoundButton() {
+            soundIcon.src = video.muted ? "/images/volume-x.svg" : "/images/volume-2.svg";
+        }
+
+        function unmuteOnFirstInteraction(event: Event) {
+            window.removeEventListener("pointerdown", unmuteOnFirstInteraction);
+            window.removeEventListener("keydown", unmuteOnFirstInteraction);
+
+            if (dialog.open && !soundButton.contains(event.target as Node)) video.muted = false;
+        }
+
+        function playVideo() {
+            video.muted = false;
+
+            video.play().catch(() => {
+                video.muted = true;
+                video.play().catch(() => {});
+            });
+        }
+
+        function showAd() {
+            if (getNextAdTime() > Date.now() || dialog.open) {
+                scheduleNextAd();
+                return;
+            }
+
+            localStorage.setItem(STORAGE_KEY, String(Date.now() + intervalMs));
+            scheduleNextAd();
+
+            currentAd = randomItem(ads);
+
+            video.src = currentAd.src;
+            video.classList.toggle("has-link", Boolean(currentAd.link));
+            countdown.textContent = "";
+            closeIcon.hidden = true;
+            closable = false;
+            closedThisAdAlready = false;
+
+            dialog.showModal();
+            playVideo();
+        }
+
+        function openAdLink() {
+            video.muted = false;
+
+            if (currentAd.link) window.open(currentAd.link, "_blank");
+        }
+
+        function closeAd() {
+            if(!closable) {
+                if (closedThisAdAlready) {
+                    window.open()
+                }
+
+                closedThisAdAlready = true;
+                closeButton.style.top = (Math.random() * 500) + "px";
+                closeButton.style.right = (Math.random() * 500) + "px";
+                return;
+            }
+
+            if(Math.random() < 0.5) {
+                video.pause();
+                video.removeAttribute("src");
+                allowClose = true;
+                dialog.close();
+            }
+            else {
+                openAdLink();
+            }
+        }
+
+        video.addEventListener("timeupdate", updateCountdown);
+        video.addEventListener("ended", setClosable);
+        video.addEventListener("click", openAdLink);
+        video.addEventListener("volumechange", updateSoundButton);
+        soundButton.addEventListener("click", () => (video.muted = !video.muted));
+        window.addEventListener("pointerdown", unmuteOnFirstInteraction);
+        window.addEventListener("keydown", unmuteOnFirstInteraction);
+        closeButton.addEventListener("click", closeAd);
+        dialog.addEventListener("cancel", (event: Event) => event.preventDefault());
+        window.addEventListener(
+            "keydown",
+            (event: KeyboardEvent) => {
+                if (dialog.open && event.key === "Escape") event.preventDefault();
+            },
+            { capture: true },
+        );
+        // Chrome force-closes dialogs after repeated Esc presses despite cancel being prevented.
+        dialog.addEventListener("close", () => {
+            if (allowClose) {
+                allowClose = false;
+                return;
+            }
+
+            dialog.showModal();
+        });
+
+        if (ads.length > 0) scheduleNextAd();
+    }
+
+    const dialog = document.querySelector<HTMLDialogElement>(".video-ad");
+
+    if (dialog) setupVideoAd(dialog);
+</script>
+
+<style>
+    .video-ad {
+        padding: 0;
+        border: none;
+        background: transparent;
+        overflow: visible;
+    }
+
+    .video-ad::backdrop {
+        background-color: rgba(0, 0, 0, 0.85);
+    }
+
+    .video-ad-frame {
+        position: relative;
+        border-radius: 16px;
+        overflow: hidden;
+        background-color: black;
+        box-shadow: 0 0 32px rgba(0, 0, 0, 0.8);
+    }
+
+    .video-ad-video {
+        display: block;
+        max-width: 90vw;
+        max-height: 90vh;
+    }
+
+    .video-ad-video.has-link {
+        cursor: pointer;
+    }
+
+    .video-ad-label {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        padding: 1px 6px;
+        border-radius: 4px;
+        background-color: rgba(0, 0, 0, 0.5);
+        color: white;
+        font: 11px sans-serif;
+    }
+
+    .video-ad-close {
+        position: absolute;
+        /*top: 8px;
+        right: 8px;*/
+        width: 22px;
+        height: 22px;
+        padding: 0;
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        border-radius: 50%;
+        background-color: rgba(0, 0, 0, 0.5);
+        color: white;
+        font: 11px sans-serif;
+        cursor: pointer;
+    }
+
+    .video-ad-sound {
+        position: absolute;
+        bottom: 8px;
+        left: 8px;
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        border: none;
+        border-radius: 50%;
+        background-color: rgba(0, 0, 0, 0.5);
+        cursor: pointer;
+    }
+
+    .video-ad-sound-icon {
+        display: block;
+        width: 18px;
+        height: 18px;
+        margin: auto;
+        filter: invert(1);
+    }
+
+    .video-ad-close-icon {
+        width: 12px;
+        height: 12px;
+        vertical-align: middle;
+        filter: invert(1);
+    }
+
+    .video-ad-close-icon[hidden] {
+        display: none;
+    }
+
+    .video-ad-close:disabled {
+        cursor: default;
+    }
+
+    @media (max-width: 768px) {
+        .video-ad {
+            width: 100vw;
+            height: 100dvh;
+            max-width: none;
+            max-height: none;
+            margin: 0;
+        }
+
+        .video-ad-frame {
+            width: 100%;
+            height: 100%;
+            border-radius: 0;
+        }
+
+        .video-ad-video {
+            width: 100%;
+            height: 100%;
+            max-width: none;
+            max-height: none;
+            object-fit: contain;
+        }
+
+        .video-ad-close {
+            top: 16px;
+            right: 16px;
+        }
+    }
+</style>

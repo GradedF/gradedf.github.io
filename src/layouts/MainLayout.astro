@@ -3,6 +3,9 @@ import "../styles/main.css";
 import Ad from "../components/ad.astro";
 import CookieConsent from "../components/CookieConsent.astro";
 import CaptchaDialog from "../components/CaptchaDialog.astro";
+import LstwoMods from "../components/LstwoMods.astro";
+import VideoAd from "../components/Video.astro";
+import type { VideoAdDefinition } from "../components/Video.astro";
 
 const { title = "Graded F" } = Astro.props;
 
@@ -19,6 +22,8 @@ const ads = [
     { image: "/images/rbgad.webp", link: "https://rooberbandgames.com" },
     { image: "/images/gabad.webp", link: "https://www.gov.il/en" },
     { image: "/images/adobe ad.webp", link: "https://adobe.com" },
+    { image: "/images/caead1.webp", link: "https://caethecow.com" },
+    { image: "/images/superfuckingmario.comad.webp", link: "https://superfuckingmario.com" },
 ];
 
 const bannerAds = [
@@ -30,6 +35,16 @@ const bannerAds = [
     { image: "/images/blenderad.webp", link: "https://blender.org", no_icons: true },
     { image: "/images/chatgptad.webp", link: "https://chatgpt.com", no_icons: true },
     { image: "/images/gdad.webp", link: "https://geometrydash.com", no_icons: true },
+];
+
+const videoAds: VideoAdDefinition[] = [
+    { src: "/videos/ads/windowsad.mp4", link: "https://www.microsoft.com/windows" },
+    { src: "/videos/ads/windowsad2.mp4", link: "https://www.microsoft.com/windows" },
+    { src: "/videos/ads/windowsad3.mp4", link: "https://www.microsoft.com/windows", skipAfter: 15 },
+    { src: "/videos/ads/googlead1.mp4", link: "https://google.com", skipAfter: 20 },
+    { src: "/videos/ads/mediamarktad1.mp4", link: "https://mediamarkt.de", skipAfter: 15 },
+    { src: "/videos/ads/laptopad1.mp4", link: "https://www.lenovo.com/de/de/p/laptops/legion-laptops/legion-9-series/legion-9i-gen-10-18-inch-intel/83eycto1wwde1", skipAfter: 15 },
+    { src: "/videos/ads/mcdonaldsad1.mp4", link: "https://mcdonalds.com", skipAfter: 15 },
 ];
 ---
 
@@ -43,8 +58,10 @@ const bannerAds = [
 
 <body>
 
+<LstwoMods />
 <CookieConsent />
 <CaptchaDialog />
+<VideoAd ads={videoAds} />
 
 <marquee class="watermark" behavior="alternate" direction="right">
     <marquee behavior="alternate" direction="down">
@@ -92,7 +109,6 @@ const bannerAds = [
 
 <script>
     import { refreshAd, initAdRedirects } from "../scripts/ad";
-
     initAdRedirects();
     
     const sidebarIntervals = [5_091, 6_205, 5_683, 6_917];
