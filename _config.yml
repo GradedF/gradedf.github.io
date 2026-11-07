@@ -1,1 +1,1 @@
-{% include .well-known/atproto-did %}
+include: [".well-known"]
